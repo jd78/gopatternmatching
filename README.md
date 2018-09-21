@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/jd78/gopatternmatching.svg?branch=master)](https://travis-ci.org/jd78/gopatternmatching)
 
-Pattern Matching for Golang inspired from Hudo's "Just another pattern matching for c#" (https://github.com/hudo/PatternMatch)
+Pattern Matching for Golang inspired by Hudo's "Just another pattern matching for C#" (https://github.com/hudo/PatternMatch)
 
 #### Examples  
 
@@ -14,7 +14,7 @@ result := patternmatch.ResultMatch(70).
 		When(func(x interface{}) bool { return x.(int) > 10 }, func() interface{} { return "> 10" }).
             	Result().(string)
             
-//Result will be "> 50"
+// Result will be "> 50"
 
 result := patternmatch.ResultMatch(2).
 		When(func(x interface{}) bool { return x.(int) > 100 }, func() interface{} { return "> 100" }).
@@ -22,11 +22,11 @@ result := patternmatch.ResultMatch(2).
 		When(func(x interface{}) bool { return x.(int) > 10 }, func() interface{} { return "> 10" }).
             	Result().(string)
 
-//If unmatched Result will panic
+// If unmatched Result will panic
 
 ```
 
-Using defaults
+Using defaults:
 
 ```go
 
@@ -36,11 +36,11 @@ result := patternmatch.ResultMatch(2).
 		When(func(x interface{}) bool { return x.(int) > 10 }, func() interface{} { return "> 10" }).
             	ResultOrDefault("< 10").(string)
             
-//Result will be "< 10", with ResultOrDefault you'll never panic
+// Result will be "< 10", with ResultOrDefault you'll never panic
 
 ```
 
-No conditional pattern matching
+No conditional pattern matching:
 
 ```go
 result := patternmatch.ResultMatch(5).
@@ -50,7 +50,7 @@ result := patternmatch.ResultMatch(5).
         	Result()
 ```
 
-Pattern matching that does not return a value but executes an action
+Pattern matching that does not return a value but executes an action:
 
 ```go
 
@@ -65,6 +65,6 @@ patternmatch.Match(5)
 patternmatch.Match(10)
     .WhenValue(5, func() { fmt.Println("is 5") })
     .WhenValue(5, func() { fmt.Println("is 6") })
-    .OtherwiseThrow() //will throw if not matched
+    .OtherwiseThrow() // will throw if not matched
 
 ```
