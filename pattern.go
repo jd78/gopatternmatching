@@ -1,26 +1,30 @@
 package patternmatch
 
-import "reflect"
+import (
+	"errors"
 
-type match struct {
-	input     interface{}
+	"github.com/google/go-cmp/cmp"
+)
+
+type match[T any] struct {
+	input     T
 	isMatched bool
 }
 
-type matchResult struct {
-	input     interface{}
-	output    interface{}
+type matchResult[T, K any] struct {
+	input     T
+	output    K
 	isMatched bool
 }
 
 // Match condition and run an action that does not return a type
-func Match(input interface{}) match {
-	return match{reflect.ValueOf(input).Interface(), false}
+func Match[T any](input T) match[T] {
+	return match[T]{input, false}
 }
 
-// when param is "func(input interface{}) bool" used to match a condition
+// when param is "func(input T) bool" used to match a condition
 // a param is "func()" used to run an action
-func (m match) When(f func(input interface{}) bool, a func()) match {
+func (m match[T]) When(f func(input T) bool, a func()) match[T] {
 	if m.isMatched {
 		return m
 	}
@@ -33,14 +37,14 @@ func (m match) When(f func(input interface{}) bool, a func()) match {
 	return m
 }
 
-// val param is "interface{}" used to exact match the input with the passed condition
+// val param is "T" used to exact match the input with the passed condition
 // a param is "func()" used to run an action
-func (m match) WhenValue(val interface{}, a func()) match {
+func (m match[T]) WhenValue(val T, a func()) match[T] {
 	if m.isMatched {
 		return m
 	}
 
-	if m.input == val {
+	if cmp.Equal(m.input, val) {
 		a()
 		m.isMatched = true
 	}
@@ -48,21 +52,22 @@ func (m match) WhenValue(val interface{}, a func()) match {
 	return m
 }
 
-// OtherwiseThrow throws if the pattern is not matched, optionally used at the end of the pattern matching
-func (m match) OtherwiseThrow() {
+// OtherwisePanic panic if the pattern is not matched, optionally used at the end of the pattern matching
+func (m match[T]) OtherwisePanic() {
 	if !m.isMatched {
 		panic("pattern not matched")
 	}
 }
 
 // ResultMatch matches conditions and run a function that returns a type
-func ResultMatch(input interface{}) matchResult {
-	return matchResult{reflect.ValueOf(input).Interface(), nil, false}
+func ResultMatch[T, K any](input T) matchResult[T, K] {
+	var zeroK K
+	return matchResult[T, K]{input, zeroK, false}
 }
 
-// when param is "func(input interface{}) bool" used to match a condition
-// a param is "func() interface{}" used to run an action
-func (m matchResult) When(f func(input interface{}) bool, a func() interface{}) matchResult {
+// when param is "func(input T) bool" used to match a condition
+// a param is "func() K" used to run an action
+func (m matchResult[T, K]) When(f func(input T) bool, a func() K) matchResult[T, K] {
 	if m.isMatched {
 		return m
 	}
@@ -75,14 +80,14 @@ func (m matchResult) When(f func(input interface{}) bool, a func() interface{}) 
 	return m
 }
 
-// val param is "interface{}" used to exact match the input with the passed condition
-// a param is "func() interface{}" used to run an action
-func (m matchResult) WhenValue(val interface{}, a func() interface{}) matchResult {
+// val param is "T" used to exact match the input with the passed condition
+// a param is "K" used to run an action
+func (m matchResult[T, K]) WhenValue(val T, a func() K) matchResult[T, K] {
 	if m.isMatched {
 		return m
 	}
 
-	if m.input == val {
+	if cmp.Equal(m.input, val) {
 		m.output = a()
 		m.isMatched = true
 	}
@@ -91,16 +96,18 @@ func (m matchResult) WhenValue(val interface{}, a func() interface{}) matchResul
 }
 
 // Get the result from the pattern or throws if not matched
-func (m matchResult) Result() interface{} {
-	if m.output == nil {
-		panic("pattern not matched")
+func (m matchResult[T, K]) Result() (K, error) {
+	var zeroK K
+	if cmp.Equal(m.output, zeroK) {
+		return zeroK, errors.New("pattern not matched")
 	}
-	return m.output
+	return m.output, nil
 }
 
 // Get the result from the pattern or the passed default value
-func (m matchResult) ResultOrDefault(def interface{}) interface{} {
-	if m.output == nil {
+func (m matchResult[T, K]) ResultOrDefault(def K) K {
+	var zeroK K
+	if cmp.Equal(m.output, zeroK) {
 		return def
 	}
 	return m.output
