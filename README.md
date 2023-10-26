@@ -1,7 +1,5 @@
 # Go Pattern Matching
 
-[![Build Status](https://travis-ci.org/jd78/gopatternmatching.svg?branch=master)](https://travis-ci.org/jd78/gopatternmatching)
-
 Pattern Matching for Golang inspired by Hudo's "Just another pattern matching for C#" (https://github.com/hudo/PatternMatch)
 
 #### Examples
