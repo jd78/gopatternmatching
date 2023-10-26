@@ -1,7 +1,6 @@
 package patternmatch
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -83,8 +82,12 @@ func TestIsMatched(t *testing.T) {
 	assert.True(t, b)
 }
 
-func TestT(t *testing.T) {
-	Match(5).
-		WhenValue(5, func() { fmt.Println("is 5") }).
-		WhenValue(6, func() { fmt.Println("is 6") })
+func TestMaybe(t *testing.T) {
+	maybeOpt := ResultMatch[int, string](0).
+		WhenValue(5, func() string { return "5" }).
+		WhenValue(0, func() string { return "is 0" }).
+		MaybeResult()
+
+	assert.True(t, maybeOpt.IsSome())
+	assert.Equal(t, "is 0", maybeOpt.Get())
 }
