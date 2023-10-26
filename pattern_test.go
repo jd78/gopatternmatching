@@ -1,7 +1,11 @@
 package patternmatch
 
-import "testing"
-import "github.com/stretchr/testify/assert"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestConditionWithAction(t *testing.T) {
 
@@ -16,32 +20,43 @@ func TestConditionWithAction(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		result := ResultMatch(table.input).
-			When(func(x interface{}) bool { return x.(int) > 100 }, func() interface{} { return "> 100" }).
-			When(func(x interface{}) bool { return x.(int) > 50 }, func() interface{} { return "> 50" }).
-			When(func(x interface{}) bool { return x.(int) > 10 }, func() interface{} { return "> 10" }).
-			ResultOrDefault("").(string)
+		result := ResultMatch[int, string](table.input).
+			When(func(x int) bool { return x > 100 }, func() string { return "> 100" }).
+			When(func(x int) bool { return x > 50 }, func() string { return "> 50" }).
+			When(func(x int) bool { return x > 10 }, func() string { return "> 10" }).
+			ResultOrDefault("")
 
-		if result != table.expected {
-			t.Errorf("Expected %s but got %s", table.expected, result)
-		}
+		assert.Equal(t, table.expected, result)
 	}
 }
 
 func TestWhenValue(t *testing.T) {
-	result := ResultMatch(5).
-		WhenValue(5, func() interface{} { return "is int 5" }).
-		WhenValue("10", func() interface{} { return "is string 10" }).
-		WhenValue(true, func() interface{} { return "is bool" }).
+	result, err := ResultMatch[interface{}, string](5).
+		WhenValue(5, func() string { return "is int 5" }).
+		WhenValue("10", func() string { return "is string 10" }).
+		WhenValue(true, func() string { return "is bool" }).
 		Result()
 
-	if result != "is int 5" {
-		t.Errorf("Expected is int 5 but got %s", result)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "is int 5", result)
 }
 
-func TestPanicIfNoResult(t *testing.T) {
-	assert.Panics(t, func() { ResultMatch(5).WhenValue(6, func() interface{} { return "is int 6" }).Result() })
+func TestResultOrDefault(t *testing.T) {
+	result := ResultMatch[interface{}, string](6).
+		WhenValue(5, func() string { return "is int 5" }).
+		WhenValue("10", func() string { return "is string 10" }).
+		WhenValue(true, func() string { return "is bool" }).
+		ResultOrDefault("is default")
+
+	assert.Equal(t, "is default", result)
+}
+
+func TestErrorIfNoResult(t *testing.T) {
+	res, err := ResultMatch[int, string](5).
+		WhenValue(6, func() string { return "is int 6" }).
+		Result()
+	assert.Equal(t, "", res)
+	assert.Error(t, err)
 }
 
 func TestActionWhenValue(t *testing.T) {
@@ -51,19 +66,25 @@ func TestActionWhenValue(t *testing.T) {
 func TestAction(t *testing.T) {
 	called := false
 	f := func() { called = true }
-	Match(5).When(func(i interface{}) bool { return true }, f)
+	Match(5).When(func(i int) bool { return true }, f)
 	assert.True(t, called)
 }
 
-func TestOtherwiseThrow(t *testing.T) {
-	assert.Panics(t, func() { Match(5).WhenValue(6, func() {}).OtherwiseThrow() })
+func TestOtherwisePanic(t *testing.T) {
+	assert.Panics(t, func() { Match(5).WhenValue(6, func() {}).OtherwisePanic() })
 }
 
 func TestIsMatched(t *testing.T) {
 
 	b := Match(5).
-		When(func(i interface{}) bool { return true }, func() {}).
-		When(func(i interface{}) bool { return true }, func() {}).isMatched
+		When(func(i int) bool { return true }, func() {}).
+		When(func(i int) bool { return true }, func() {}).isMatched
 
 	assert.True(t, b)
+}
+
+func TestT(t *testing.T) {
+	Match(5).
+		WhenValue(5, func() { fmt.Println("is 5") }).
+		WhenValue(6, func() { fmt.Println("is 6") })
 }
