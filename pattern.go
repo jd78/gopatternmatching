@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/google/go-cmp/cmp"
+	gooptional "github.com/jd78/go-optional"
 )
 
 type match[T any] struct {
@@ -95,13 +96,22 @@ func (m matchResult[T, K]) WhenValue(val T, a func() K) matchResult[T, K] {
 	return m
 }
 
-// Get the result from the pattern or throws if not matched
+// Get the result from the pattern
 func (m matchResult[T, K]) Result() (K, error) {
 	var zeroK K
 	if cmp.Equal(m.output, zeroK) {
 		return zeroK, errors.New("pattern not matched")
 	}
 	return m.output, nil
+}
+
+// Get the optional result from the pattern or throws if not matched
+func (m matchResult[T, K]) MaybeResult() gooptional.Optional[K] {
+	var zeroK K
+	if cmp.Equal(m.output, zeroK) {
+		return gooptional.Error[K](errors.New("pattern not matched"))
+	}
+	return gooptional.Some[K](m.output)
 }
 
 // Get the result from the pattern or the passed default value
