@@ -28,7 +28,7 @@ maybeResult := patternmatch.ResultMatch[int, string](11).
     When(func(x int) bool { return x > 10 }, func() string { return "> 10" }).
     MaybeResult()
 
-// result will be Optional[string], error{"pattern not matched"}
+// result will be Optional[string] -> Some "> 10"
 
 ```
 
